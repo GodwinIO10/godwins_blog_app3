@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Web Tokens</title>
+</head>
+<body>
+    <header>
+        <h1>Generating And Testing JWT</h1> 
+    </header>
+    <main>
+        <p><button id="btnLive">Click to Test Server Status</button></p>
+        <p><button id="btnToken">Click to Get Token</button></p>
+        <p><button id="btnTest">Click to Validate Token</button></p>
+        <pre id="output"></pre>
+    </main>
+    <script>
+        var output
+        document.addEventListener("DOMContentLoaded", () => {
+            output = document.getElementById("output")
+            document.getElementById("btnLive").addEventListener("click", live)
+            document.getElementById("btnToken").addEventListener("click", getToken)
+            document.getElementById("btnTest").addEventListener("click", testToken)
+        })
+        const baseurl = "http://127.0.0.1:3737/"
+
+        function live(ev) {
+            // checks that the server is live
+            fetch(baseurl)
+                .then(res => res.json())
+                .then(content => {
+                    output.innerHTML = JSON.stringify(content, "\n", 2)
+                })
+                .catch(error => console.error)
+        }
+
+        function getToken(ev) {
+            // requests for a token
+            fetch(baseurl + "token")
+                .then(res => res.json())
+                .then(content => {
+                    output.innerHTML = JSON.stringify(content, "\n", 2)
+                    var token = content.data
+                    localStorage.setItem("token", token)
+                })
+                .catch(error => console.error)
+        }
+
+        function testToken(ev) {
+            // sends the token and for some special tasks
+            var token = localStorage.getItem("token")
+            if (!token) {
+                output.innerHTML = "No available token"
+                return
+            }
+            let h = new Headers()
+            h.append("Authorization", `Bearer ${token}`)
+            var url = baseurl + "test"
+            var req = new Request(url, {
+                headers: h,
+                method: "GET",
+            })
+            fetch(req)
+                .then(res => res.json())
+                .then(content => {
+                    output.innerHTML = JSON.stringify(content, "\n", 2)
+                    if (content.code > 0){
+                        // error has happened
+                        localStorage.removeItem("token")
+                    }
+                })
+                .catch(error => console.error)
+        }
+    </script>
+</body>
+</html>
+
+
